@@ -441,6 +441,10 @@ input[type='range']:disabled {
   max-width: none;
 }
 
+#bgImage[hidden] {
+  display: none;
+}
+
 #bubbleLayer {
   position: absolute;
   inset: 0;
