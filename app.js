@@ -76,7 +76,7 @@ function getSelectedBubble() {
 function setSelected(id) {
   state.selectedId = id;
   const index = state.bubbles.findIndex((bubble) => bubble.id === id);
-  if (index > -1) {
+  if (index > -1 && index !== state.bubbles.length - 1) {
     const [bubble] = state.bubbles.splice(index, 1);
     state.bubbles.push(bubble);
     render();
@@ -178,6 +178,7 @@ function createBubbleNode(bubble) {
     if (event.target === textEl && document.activeElement === textEl) return;
     event.stopPropagation();
     setSelected(bubble.id);
+    const activeNode = bubbleNodes.get(bubble.id) || node;
 
     const offsetX = event.clientX - bubble.x;
     const offsetY = event.clientY - bubble.y;
@@ -185,8 +186,8 @@ function createBubbleNode(bubble) {
     const onMove = (moveEvent) => {
       bubble.x = Math.max(0, moveEvent.clientX - offsetX);
       bubble.y = Math.max(0, moveEvent.clientY - offsetY);
-      node.style.left = `${bubble.x}px`;
-      node.style.top = `${bubble.y}px`;
+      activeNode.style.left = `${bubble.x}px`;
+      activeNode.style.top = `${bubble.y}px`;
     };
 
     const onUp = () => {
@@ -202,6 +203,7 @@ function createBubbleNode(bubble) {
   resize.addEventListener('pointerdown', (event) => {
     event.stopPropagation();
     setSelected(bubble.id);
+    const activeNode = bubbleNodes.get(bubble.id) || node;
 
     const startX = event.clientX;
     const startY = event.clientY;
@@ -211,8 +213,8 @@ function createBubbleNode(bubble) {
     const onMove = (moveEvent) => {
       bubble.width = Math.max(90, baseW + (moveEvent.clientX - startX));
       bubble.height = Math.max(55, baseH + (moveEvent.clientY - startY));
-      node.style.width = `${bubble.width}px`;
-      node.style.height = `${bubble.height}px`;
+      activeNode.style.width = `${bubble.width}px`;
+      activeNode.style.height = `${bubble.height}px`;
     };
 
     const onUp = () => {
