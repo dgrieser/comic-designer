@@ -1,5 +1,6 @@
 const state = {
   image: null,
+  imageUrl: null,
   bubbles: [],
   selectedId: null,
   nextId: 1,
@@ -166,6 +167,7 @@ function createBubbleNode(bubble) {
   node.addEventListener('pointerdown', (event) => {
     if (event.target.classList.contains('resize')) return;
     if (event.target === textEl && document.activeElement === textEl) return;
+    event.stopPropagation();
     setSelected(bubble.id);
 
     const offsetX = event.clientX - bubble.x;
@@ -174,7 +176,8 @@ function createBubbleNode(bubble) {
     const onMove = (moveEvent) => {
       bubble.x = Math.max(0, moveEvent.clientX - offsetX);
       bubble.y = Math.max(0, moveEvent.clientY - offsetY);
-      render();
+      node.style.left = `${bubble.x}px`;
+      node.style.top = `${bubble.y}px`;
     };
 
     const onUp = () => {
@@ -199,7 +202,8 @@ function createBubbleNode(bubble) {
     const onMove = (moveEvent) => {
       bubble.width = Math.max(90, baseW + (moveEvent.clientX - startX));
       bubble.height = Math.max(55, baseH + (moveEvent.clientY - startY));
-      render();
+      node.style.width = `${bubble.width}px`;
+      node.style.height = `${bubble.height}px`;
     };
 
     const onUp = () => {
@@ -252,6 +256,7 @@ function applyControlChange() {
 }
 
 async function loadImage(file) {
+  if (state.imageUrl) URL.revokeObjectURL(state.imageUrl);
   const src = URL.createObjectURL(file);
   const img = new Image();
 
@@ -262,6 +267,7 @@ async function loadImage(file) {
   });
 
   state.image = img;
+  state.imageUrl = src;
   el.bgImage.src = src;
   el.bgImage.hidden = false;
   el.workspace.style.width = `${img.naturalWidth}px`;
@@ -283,6 +289,56 @@ function roundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+function screamPoints(x, y, w, h) {
+  const points = [
+    [10, 0], [20, 8], [30, 0], [40, 8], [50, 0], [60, 8], [70, 0], [80, 8], [90, 0],
+    [100, 10], [92, 20], [100, 30], [92, 40], [100, 50], [92, 60], [100, 70], [92, 80], [100, 90],
+    [90, 100], [80, 92], [70, 100], [60, 92], [50, 100], [40, 92], [30, 100], [20, 92], [10, 100],
+    [0, 90], [8, 80], [0, 70], [8, 60], [0, 50], [8, 40], [0, 30], [8, 20], [0, 10],
+  ];
+  return points.map(([px, py]) => [x + (px / 100) * w, y + (py / 100) * h]);
+}
+
+function wrapTextLines(ctx, text, maxWidth) {
+  const wrapped = [];
+  text.split('\n').forEach((line) => {
+    if (!line) {
+      wrapped.push('');
+      return;
+    }
+    const tokens = line.split(/(\s+)/).filter(Boolean);
+    let current = '';
+    tokens.forEach((token) => {
+      const next = `${current}${token}`;
+      if (ctx.measureText(next).width <= maxWidth) {
+        current = next;
+        return;
+      }
+      if (current.trim()) {
+        wrapped.push(current.trimEnd());
+        current = '';
+      }
+      if (ctx.measureText(token).width <= maxWidth) {
+        current = token.trimStart();
+        return;
+      }
+      let fragment = '';
+      Array.from(token).forEach((char) => {
+        const candidate = `${fragment}${char}`;
+        if (ctx.measureText(candidate).width > maxWidth && fragment) {
+          wrapped.push(fragment);
+          fragment = char;
+        } else {
+          fragment = candidate;
+        }
+      });
+      current = fragment;
+    });
+    wrapped.push(current.trimEnd());
+  });
+  return wrapped;
+}
+
 function drawBubbleToCanvas(ctx, bubble) {
   const x = bubble.x;
   const y = bubble.y;
@@ -294,20 +350,12 @@ function drawBubbleToCanvas(ctx, bubble) {
   ctx.fillStyle = hexToRgba(bubble.bgColor, bubble.bgOpacity);
 
   if (bubble.shape === 'scream') {
-    const spikes = 24;
-    const cx = x + w / 2;
-    const cy = y + h / 2;
-    const radiusOuter = Math.max(w, h) / 2;
-    const radiusInner = radiusOuter * 0.82;
+    const points = screamPoints(x, y, w, h);
     ctx.beginPath();
-    for (let i = 0; i < spikes * 2; i += 1) {
-      const angle = (Math.PI * i) / spikes;
-      const r = i % 2 === 0 ? radiusOuter : radiusInner;
-      const px = cx + Math.cos(angle) * r;
-      const py = cy + Math.sin(angle) * r;
-      if (i === 0) ctx.moveTo(px, py);
+    points.forEach(([px, py], index) => {
+      if (index === 0) ctx.moveTo(px, py);
       else ctx.lineTo(px, py);
-    }
+    });
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -317,7 +365,6 @@ function drawBubbleToCanvas(ctx, bubble) {
     ctx.stroke();
 
     if (bubble.shape === 'speech-left' || bubble.shape === 'speech-right') {
-      const tailW = 24;
       const tailH = 22;
       ctx.beginPath();
       if (bubble.shape === 'speech-left') {
@@ -340,7 +387,7 @@ function drawBubbleToCanvas(ctx, bubble) {
   ctx.textBaseline = 'top';
   ctx.font = `${bubble.fontSize}px ${bubble.fontFamily}`;
 
-  const lines = bubble.text.split('\n');
+  const lines = wrapTextLines(ctx, bubble.text, w - 32);
   const xText = bubble.textAlign === 'left' ? x + 16 : bubble.textAlign === 'right' ? x + w - 16 : x + w / 2;
   let yText = y + 16;
   lines.forEach((line) => {
