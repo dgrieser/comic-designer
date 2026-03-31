@@ -20,6 +20,7 @@ const el = {
   lineColor: document.getElementById('lineColor'),
   bgColor: document.getElementById('bgColor'),
   bgOpacity: document.getElementById('bgOpacity'),
+  mirrorVertical: document.getElementById('mirrorVertical'),
   fontColor: document.getElementById('fontColor'),
   fontSize: document.getElementById('fontSize'),
   fontFamily: document.getElementById('fontFamily'),
@@ -32,6 +33,7 @@ const controls = [
   'lineColor',
   'bgColor',
   'bgOpacity',
+  'mirrorVertical',
   'fontColor',
   'fontSize',
   'fontFamily',
@@ -63,6 +65,7 @@ function bubbleDefaults() {
     lineColor: '#111111',
     bgColor: '#ffffff',
     bgOpacity: 1,
+    mirrorVertical: false,
     fontColor: '#111111',
     fontSize: 28,
     fontFamily: "'Comic Neue', 'Comic Sans MS', cursive",
@@ -110,6 +113,7 @@ function syncControls() {
   el.lineColor.value = bubble.lineColor;
   el.bgColor.value = bubble.bgColor;
   el.bgOpacity.value = bubble.bgOpacity;
+  el.mirrorVertical.checked = bubble.mirrorVertical;
   el.fontColor.value = bubble.fontColor;
   el.fontSize.value = bubble.fontSize;
   el.fontFamily.value = bubble.fontFamily;
@@ -158,6 +162,8 @@ function styleBubbleElement(node, bubble) {
   if (shapeSvg && shapePath) {
     if (isSvgShape) {
       shapeSvg.style.display = 'block';
+      shapeSvg.style.transform = bubble.mirrorVertical ? 'scaleX(-1)' : '';
+      shapeSvg.style.transformOrigin = 'center';
       shapeSvg.setAttribute('viewBox', bubble.shape === 'scream' ? '87 48 158 136' : '0 0 320 200');
       if (bubble.shape === 'scream') {
         shapePath.setAttribute('transform', 'translate(171,21)');
@@ -171,6 +177,7 @@ function styleBubbleElement(node, bubble) {
       shapePath.setAttribute('stroke-linejoin', 'round');
     } else {
       shapeSvg.style.display = 'none';
+      shapeSvg.style.transform = '';
     }
   }
 }
@@ -340,6 +347,7 @@ function applyControlChange() {
   bubble.lineColor = el.lineColor.value;
   bubble.bgColor = el.bgColor.value;
   bubble.bgOpacity = Number(el.bgOpacity.value);
+  bubble.mirrorVertical = el.mirrorVertical.checked;
   bubble.fontColor = el.fontColor.value;
   bubble.fontSize = Number(el.fontSize.value);
   bubble.fontFamily = el.fontFamily.value;
@@ -468,6 +476,10 @@ function drawBubbleToCanvas(ctx, bubble) {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scaleX, scaleY);
+    if (bubble.mirrorVertical) {
+      ctx.translate(158, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.translate(171 - 87, 21 - 48);
     ctx.lineWidth = bubble.lineWidth / Math.min(scaleX, scaleY);
     const path2d = new Path2D(bubbleSvgPath('scream'));
@@ -480,6 +492,10 @@ function drawBubbleToCanvas(ctx, bubble) {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scaleX, scaleY);
+    if (bubble.mirrorVertical) {
+      ctx.translate(320, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.lineJoin = 'round';
     ctx.lineWidth = bubble.lineWidth / Math.min(scaleX, scaleY);
     const path2d = new Path2D(bubbleSvgPath(bubble.shape));
