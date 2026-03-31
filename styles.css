@@ -295,6 +295,20 @@ label {
   grid-column: 1 / -1;
 }
 
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.checkbox-row input[type='checkbox'] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
 select,
 input[type='number'] {
   background: var(--panel-surface);
