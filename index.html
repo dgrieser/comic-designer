@@ -4,82 +4,122 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Comic Designer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app">
-      <aside class="panel">
-        <button id="togglePanelBtn" class="panel-toggle" type="button" aria-expanded="true">Collapse controls</button>
-        <div id="panelContent">
-          <h1>Comic Designer</h1>
+      <aside class="panel" id="panel">
+        <div class="panel-body">
+          <div class="panel-inner">
+            <div class="app-title">Comic<br>Designer</div>
 
-          <section>
-            <label for="imageLoader">Load image</label>
-            <input id="imageLoader" type="file" accept="image/*" />
-          </section>
-
-          <section class="buttons">
-            <button id="addBubbleBtn" disabled>Add speech bubble</button>
-            <button id="exportBtn" disabled>Export PNG</button>
-          </section>
-
-          <section>
-            <h2>Selected bubble</h2>
-            <div class="grid">
-              <label>Shape
-                <select id="shape">
-                  <option value="speech-left">Speech (tail left)</option>
-                  <option value="speech-right">Speech (tail right)</option>
-                  <option value="scream">Screaming</option>
-                  <option value="intro">Intro box</option>
-                </select>
-              </label>
-
-              <label>Line width
-                <input id="lineWidth" type="number" min="1" max="20" value="3" />
-              </label>
-
-              <label>Line color
-                <input id="lineColor" type="color" value="#111111" />
-              </label>
-
-              <label>Background color
-                <input id="bgColor" type="color" value="#ffffff" />
-              </label>
-
-              <label>Opacity
-                <input id="bgOpacity" type="range" min="0" max="1" step="0.01" value="1" />
-              </label>
-
-              <label>Font color
-                <input id="fontColor" type="color" value="#111111" />
-              </label>
-
-              <label>Font size
-                <input id="fontSize" type="number" min="10" max="120" value="28" />
-              </label>
-
-              <label>Font
-                <select id="fontFamily">
-                  <option value="'Comic Sans MS', 'Comic Neue', cursive">Comic Sans</option>
-                  <option value="Arial, sans-serif">Arial</option>
-                  <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option>
-                  <option value="Georgia, serif">Georgia</option>
-                  <option value="Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif">Impact</option>
-                </select>
-              </label>
-
-              <label>Text align
-                <select id="textAlign">
-                  <option value="left">Left</option>
-                  <option value="center">Center</option>
-                  <option value="right">Right</option>
-                </select>
-              </label>
+            <div class="panel-section">
+              <div class="section-label">Image</div>
+              <div class="file-input-wrapper">
+                <label class="file-input-label" for="imageLoader">
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+                    <path d="M7.5 1v9M4 5l3.5-4L11 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M1 11v2a1 1 0 001 1h11a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  Load image
+                </label>
+                <input id="imageLoader" type="file" accept="image/*" />
+              </div>
             </div>
-            <p class="hint">Double-click bubble text to edit. Enter creates line breaks.</p>
-          </section>
+
+            <div class="panel-section">
+              <div class="section-label">Actions</div>
+              <div class="panel-actions">
+                <button id="addBubbleBtn" class="btn-primary" type="button" disabled>Add speech bubble</button>
+                <button id="exportBtn" class="btn-secondary" type="button" disabled>Export PNG</button>
+              </div>
+            </div>
+
+            <div class="panel-section">
+              <div class="section-label">Bubble</div>
+              <div class="controls-grid">
+                <label class="full-width">
+                  <span class="label-text">Shape</span>
+                  <select id="shape">
+                    <option value="speech-left">Speech — tail left</option>
+                    <option value="speech-right">Speech — tail right</option>
+                    <option value="scream">Screaming</option>
+                    <option value="intro">Intro box</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span class="label-text">Line width</span>
+                  <input id="lineWidth" type="number" min="1" max="20" value="3" />
+                </label>
+
+                <label>
+                  <span class="label-text">Opacity</span>
+                  <div class="range-wrap">
+                    <input id="bgOpacity" type="range" min="0" max="1" step="0.01" value="1" />
+                  </div>
+                </label>
+
+                <label>
+                  <span class="label-text">Outline</span>
+                  <input id="lineColor" type="color" value="#111111" />
+                </label>
+
+                <label>
+                  <span class="label-text">Fill</span>
+                  <input id="bgColor" type="color" value="#ffffff" />
+                </label>
+              </div>
+            </div>
+
+            <div class="panel-section">
+              <div class="section-label">Typography</div>
+              <div class="controls-grid">
+                <label>
+                  <span class="label-text">Color</span>
+                  <input id="fontColor" type="color" value="#111111" />
+                </label>
+
+                <label>
+                  <span class="label-text">Size</span>
+                  <input id="fontSize" type="number" min="10" max="120" value="28" />
+                </label>
+
+                <label class="full-width">
+                  <span class="label-text">Font</span>
+                  <select id="fontFamily">
+                    <option value="'Comic Sans MS', 'Comic Neue', cursive">Comic Sans</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif">Impact</option>
+                  </select>
+                </label>
+
+                <label class="full-width">
+                  <span class="label-text">Alignment</span>
+                  <select id="textAlign">
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                  </select>
+                </label>
+              </div>
+              <p class="hint">Double-click bubble to edit text</p>
+            </div>
+          </div>
         </div>
+
+        <button id="togglePanelBtn" class="panel-toggle" type="button" aria-expanded="true" aria-label="Collapse controls">
+          <span class="toggle-chevron" aria-hidden="true">
+            <svg width="9" height="15" viewBox="0 0 9 15" fill="none">
+              <path d="M7.5 1.5L2 7.5l5.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
       </aside>
 
       <section class="workspace-wrap">
