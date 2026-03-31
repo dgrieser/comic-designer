@@ -413,7 +413,7 @@ function drawBubbleToCanvas(ctx, bubble) {
     ctx.stroke();
   } else {
     if (bubble.shape === 'speech-left' || bubble.shape === 'speech-right') {
-      const tailH = 16;
+      const tailH = Math.max(16, bubble.lineWidth * 4);
       roundedSpeechPath(ctx, x, y, w, h, 24, bubble.shape === 'speech-left' ? 'left' : 'right', tailH);
     } else {
       roundedRect(ctx, x, y, w, h, bubble.shape === 'intro' ? 0 : 24);
