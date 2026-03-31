@@ -459,7 +459,7 @@ function exportPng() {
 
 el.imageLoader.addEventListener('change', (event) => {
   const [file] = event.target.files;
-  if (file) loadImage(file);
+  if (file) loadImage(file).catch((err) => console.error('Failed to load image:', err));
 });
 
 el.addBubbleBtn.addEventListener('click', addBubble);
