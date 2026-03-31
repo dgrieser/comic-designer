@@ -35,6 +35,7 @@ const controls = [
   'fontFamily',
   'textAlign',
 ];
+const bubbleNodes = new Map();
 
 function hexToRgba(hex, alpha) {
   const cleanHex = hex.replace('#', '');
@@ -74,7 +75,8 @@ function getSelectedBubble() {
 
 function setSelected(id) {
   state.selectedId = id;
-  render();
+  updateSelectionUI();
+  syncControls();
 }
 
 function syncControls() {
@@ -218,16 +220,31 @@ function createBubbleNode(bubble) {
   return node;
 }
 
+function updateSelectionUI() {
+  bubbleNodes.forEach((node, id) => {
+    node.classList.toggle('selected', id === state.selectedId);
+  });
+}
+
 function render() {
-  el.bubbleLayer.innerHTML = '';
+  const activeIds = new Set();
   state.bubbles.forEach((bubble) => {
-    const node = createBubbleNode(bubble);
-    styleBubbleElement(node, bubble);
-    if (bubble.id === state.selectedId) {
-      node.classList.add('selected');
+    activeIds.add(bubble.id);
+    let node = bubbleNodes.get(bubble.id);
+    if (!node) {
+      node = createBubbleNode(bubble);
+      bubbleNodes.set(bubble.id, node);
     }
+    styleBubbleElement(node, bubble);
     el.bubbleLayer.appendChild(node);
   });
+  bubbleNodes.forEach((node, id) => {
+    if (!activeIds.has(id)) {
+      node.remove();
+      bubbleNodes.delete(id);
+    }
+  });
+  updateSelectionUI();
   syncControls();
 }
 
@@ -251,8 +268,9 @@ function applyControlChange() {
   bubble.fontSize = Number(el.fontSize.value);
   bubble.fontFamily = el.fontFamily.value;
   bubble.textAlign = el.textAlign.value;
-
-  render();
+  const node = bubbleNodes.get(bubble.id);
+  if (node) styleBubbleElement(node, bubble);
+  syncControls();
 }
 
 async function loadImage(file) {
@@ -286,6 +304,31 @@ function roundedRect(ctx, x, y, w, h, r) {
   ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function roundedSpeechPath(ctx, x, y, w, h, r, side, tailH) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+
+  if (side === 'left') {
+    ctx.lineTo(x + 50, y + h);
+    ctx.lineTo(x + 8, y + h + tailH);
+    ctx.lineTo(x + 26, y + h);
+  } else {
+    ctx.lineTo(x + w - 26, y + h);
+    ctx.lineTo(x + w - 8, y + h + tailH);
+    ctx.lineTo(x + w - 50, y + h);
+  }
+
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
 }
 
@@ -360,26 +403,14 @@ function drawBubbleToCanvas(ctx, bubble) {
     ctx.fill();
     ctx.stroke();
   } else {
-    roundedRect(ctx, x, y, w, h, 24);
-    ctx.fill();
-    ctx.stroke();
-
     if (bubble.shape === 'speech-left' || bubble.shape === 'speech-right') {
       const tailH = 22;
-      ctx.beginPath();
-      if (bubble.shape === 'speech-left') {
-        ctx.moveTo(x + 26, y + h);
-        ctx.lineTo(x + 8, y + h + tailH);
-        ctx.lineTo(x + 50, y + h);
-      } else {
-        ctx.moveTo(x + w - 26, y + h);
-        ctx.lineTo(x + w - 8, y + h + tailH);
-        ctx.lineTo(x + w - 50, y + h);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      roundedSpeechPath(ctx, x, y, w, h, 24, bubble.shape === 'speech-left' ? 'left' : 'right', tailH);
+    } else {
+      roundedRect(ctx, x, y, w, h, 24);
     }
+    ctx.fill();
+    ctx.stroke();
   }
 
   ctx.fillStyle = bubble.fontColor;
@@ -391,7 +422,7 @@ function drawBubbleToCanvas(ctx, bubble) {
   const xText = bubble.textAlign === 'left' ? x + 16 : bubble.textAlign === 'right' ? x + w - 16 : x + w / 2;
   let yText = y + 16;
   lines.forEach((line) => {
-    ctx.fillText(line, xText, yText, w - 32);
+    ctx.fillText(line, xText, yText);
     yText += bubble.fontSize * 1.2;
   });
 }
@@ -406,10 +437,15 @@ function exportPng() {
   ctx.drawImage(state.image, 0, 0);
   state.bubbles.forEach((bubble) => drawBubbleToCanvas(ctx, bubble));
 
-  const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/png');
-  link.download = 'comic-design.png';
-  link.click();
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'comic-design.png';
+    link.click();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
 }
 
 el.imageLoader.addEventListener('change', (event) => {
