@@ -75,6 +75,13 @@ function getSelectedBubble() {
 
 function setSelected(id) {
   state.selectedId = id;
+  const index = state.bubbles.findIndex((bubble) => bubble.id === id);
+  if (index > -1) {
+    const [bubble] = state.bubbles.splice(index, 1);
+    state.bubbles.push(bubble);
+    render();
+    return;
+  }
   updateSelectionUI();
   syncControls();
 }
@@ -112,7 +119,7 @@ function styleBubbleElement(node, bubble) {
   node.style.height = `${bubble.height}px`;
   node.style.border = `${bubble.lineWidth}px solid ${bubble.lineColor}`;
   node.style.backgroundColor = hexToRgba(bubble.bgColor, bubble.bgOpacity);
-  node.style.borderRadius = bubble.shape === 'scream' ? '0' : '24px';
+  node.style.borderRadius = (bubble.shape === 'scream' || bubble.shape === 'intro') ? '0' : '24px';
   node.style.clipPath = bubbleClipPath(bubble.shape);
 
   const textEl = node.querySelector('.text');
@@ -316,13 +323,13 @@ function roundedSpeechPath(ctx, x, y, w, h, r, side, tailH) {
   ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
 
   if (side === 'left') {
-    ctx.lineTo(x + 50, y + h);
-    ctx.lineTo(x + 8, y + h + tailH);
-    ctx.lineTo(x + 26, y + h);
+    ctx.lineTo(x + 48, y + h);
+    ctx.lineTo(x + 34, y + h + tailH);
+    ctx.lineTo(x + 20, y + h);
   } else {
-    ctx.lineTo(x + w - 26, y + h);
-    ctx.lineTo(x + w - 8, y + h + tailH);
-    ctx.lineTo(x + w - 50, y + h);
+    ctx.lineTo(x + w - 20, y + h);
+    ctx.lineTo(x + w - 34, y + h + tailH);
+    ctx.lineTo(x + w - 48, y + h);
   }
 
   ctx.lineTo(x + r, y + h);
@@ -404,10 +411,10 @@ function drawBubbleToCanvas(ctx, bubble) {
     ctx.stroke();
   } else {
     if (bubble.shape === 'speech-left' || bubble.shape === 'speech-right') {
-      const tailH = 22;
+      const tailH = 16;
       roundedSpeechPath(ctx, x, y, w, h, 24, bubble.shape === 'speech-left' ? 'left' : 'right', tailH);
     } else {
-      roundedRect(ctx, x, y, w, h, 24);
+      roundedRect(ctx, x, y, w, h, bubble.shape === 'intro' ? 0 : 24);
     }
     ctx.fill();
     ctx.stroke();
@@ -418,9 +425,9 @@ function drawBubbleToCanvas(ctx, bubble) {
   ctx.textBaseline = 'top';
   ctx.font = `${bubble.fontSize}px ${bubble.fontFamily}`;
 
-  const lines = wrapTextLines(ctx, bubble.text, w - 32);
-  const xText = bubble.textAlign === 'left' ? x + 16 : bubble.textAlign === 'right' ? x + w - 16 : x + w / 2;
-  let yText = y + 16;
+  const lines = wrapTextLines(ctx, bubble.text, w - 28);
+  const xText = bubble.textAlign === 'left' ? x + 14 : bubble.textAlign === 'right' ? x + w - 14 : x + w / 2;
+  let yText = y + 14;
   lines.forEach((line) => {
     ctx.fillText(line, xText, yText);
     yText += bubble.fontSize * 1.2;
